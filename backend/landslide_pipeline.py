@@ -16,11 +16,7 @@ import numpy as np
 
 PROJECT_ID = "terrawatch-ai-506504"
 
-try:
-    ee.Initialize(project=PROJECT_ID)
-except Exception:
-    ee.Authenticate()
-    ee.Initialize(project=PROJECT_ID)
+ee.Initialize(project=PROJECT_ID)
 
 
 # ============================================================
