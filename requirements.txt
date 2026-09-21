@@ -6,6 +6,6 @@ geopy==2.5.0
 pandas==3.0.5
 requests==2.34.2
 numpy==2.5.1
-opencv-python==5.0.0.93
+opencv-python-headless==5.0.0.93
 earthengine-api==1.7.40
 torch==2.13.0
