@@ -2,7 +2,6 @@
 import streamlit as st
 import folium
 import streamlit.components.v1 as components
-from geopy.geocoders import Nominatim
 import math
 import json
 import html
@@ -2181,23 +2180,120 @@ def make_report_pdf(report_df):
 
 @st.cache_data(show_spinner=False)
 def geocode_location(query):
-    geolocator = Nominatim(
-        user_agent="DisasterLens-AI"
-    )
-    location = geolocator.geocode(
-        query,
-        language="en",
-        addressdetails=True,
-        timeout=12,
-    )
-    if location is None:
-        return None
+    try:
+        response = requests.get(
+            "https://geocoding-api.open-meteo.com/v1/search",
+            params={
+                "name": query,
+                "count": 1,
+                "language": "en",
+                "format": "json",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        results = data.get("results", [])
 
-    return {
-        "latitude": float(location.latitude),
-        "longitude": float(location.longitude),
-        "display_name": location.address,
-    }
+        if results:
+            location = results[0]
+
+            display_parts = [
+                location.get("name"),
+                location.get("admin1"),
+                location.get("country"),
+            ]
+
+            display_name = ", ".join(
+                str(part)
+                for part in display_parts
+                if part
+            )
+
+            return {
+                "latitude": float(location["latitude"]),
+                "longitude": float(location["longitude"]),
+                "display_name": display_name,
+            }
+
+        # Open-Meteo is excellent for worldwide place-name lookup,
+        # but its index does not reliably return every broad
+        # administrative region. Use Photon as a worldwide fallback
+        # for those cases, without changing the app's UI or location flow.
+        photon_response = requests.get(
+            "https://photon.komoot.io/api/",
+            params={
+                "q": query,
+                "limit": 5,
+                "lang": "en",
+            },
+            headers={
+                "User-Agent": "DisasterLens-AI/1.0",
+            },
+            timeout=10,
+        )
+        photon_response.raise_for_status()
+        photon_data = photon_response.json()
+        photon_results = photon_data.get("features", [])
+
+        if not photon_results:
+            return None
+
+        query_normalized = query.strip().casefold()
+
+        # Prefer an exact name match when Photon provides one.
+        selected = photon_results[0]
+
+        for result in photon_results:
+            properties = result.get("properties", {})
+            names = [
+                properties.get("name"),
+                properties.get("state"),
+                properties.get("county"),
+                properties.get("city"),
+                properties.get("country"),
+            ]
+
+            if any(
+                isinstance(name, str)
+                and name.strip().casefold() == query_normalized
+                for name in names
+            ):
+                selected = result
+                break
+
+        geometry = selected.get("geometry", {})
+        coordinates = geometry.get("coordinates", [])
+
+        if len(coordinates) < 2:
+            return None
+
+        properties = selected.get("properties", {})
+        longitude = float(coordinates[0])
+        latitude = float(coordinates[1])
+
+        display_parts = [
+            properties.get("name"),
+            properties.get("state"),
+            properties.get("country"),
+        ]
+
+        display_name = ", ".join(
+            str(part)
+            for part in display_parts
+            if part
+        )
+
+        return {
+            "latitude": latitude,
+            "longitude": longitude,
+            "display_name": display_name or query.strip(),
+        }
+
+    except requests.RequestException:
+        return None
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def parse_location(query):
