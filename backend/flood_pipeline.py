@@ -386,5 +386,15 @@ def analyze_flood(latitude, longitude):
 
         "overall_status": status,
 
-        "alert_level": alert_level
+        "alert_level": alert_level,
+
+        # Actual pixel-level Flood V3 segmentation mask.
+        # The analysis region is the same rectangle used to fetch
+        # Sentinel-1 pixels, so these bounds are used by the map
+        # to place the mask over the satellite image.
+        "flood_mask": flood_mask.astype(np.uint8).tolist(),
+        "flood_bounds": [
+            [latitude - 0.023, longitude - 0.023],
+            [latitude + 0.023, longitude + 0.023]
+        ]
     }

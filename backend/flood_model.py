@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 
@@ -120,7 +121,10 @@ class UNet(nn.Module):
 # LOAD TRAINED FLOOD V3 MODEL
 # ==========================================
 
-MODEL_PATH = r"E:\Project\Notebooks\best_flood_unet_v3.pth"
+MODEL_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "best_flood_unet_v3.pth"
+)
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
