@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from flood_model import model, device
+from gee_auth import initialize_gee as initialize_gee_auth
 
 
 # ==========================================
@@ -32,15 +33,7 @@ PATCH_SIZE = 512
 # ==========================================
 
 def initialize_gee():
-    try:
-        ee.Initialize(project=PROJECT_ID)
-        print("Google Earth Engine connected successfully 🛰️")
-        return True
-
-    except Exception as error:
-        print("GEE initialization error:", error)
-        return False
-
+    return initialize_gee_auth()
 
 # ==========================================
 # CREATE ANALYSIS REGION

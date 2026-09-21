@@ -9,14 +9,14 @@ import cv2
 import ee
 import numpy as np
 
+from gee_auth import initialize_gee
+
 
 # ============================================================
 # GOOGLE EARTH ENGINE
 # ============================================================
 
-PROJECT_ID = "terrawatch-ai-506504"
-
-ee.Initialize(project=PROJECT_ID)
+initialize_gee()
 
 
 # ============================================================
@@ -1277,3 +1277,4 @@ if __name__ == "__main__":
             "risk_level"
         )
     )
+
